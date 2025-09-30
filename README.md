@@ -1,14 +1,52 @@
 # Monthly Spending Tracker (FastAPI + SQLAlchemy + Jinja)
 
-A simple monthly spending tracker with a FastAPI backend, Jinja templates, and SQLite (dev). Supports:
-- Transactions CRUD via REST API
-- Monthly summary (income, expenses, net)
-- Dashboard with inline add (Bootstrap modal)
+A small FastAPI app with Jinja templates to track monthly income and expenses. SQLite for local dev, Alembic migrations, Bootstrap UI.
+
+## Features
+- Transactions CRUD API under `/api/v1/*`
+- Monthly summary: income, expenses, net
+- Dashboard with inline add via Bootstrap modal
 - Transactions page with totals and list
-- Month navigation using `?month=YYYY-MM`
+- Month synced via `?month=YYYY-MM`
 
-## Project Structure
+## Run locally (Windows PowerShell)
 
+1) Clone and enter backend
+```powershell
+git clone <your-repo-url>
+cd monthly-spending-tracker\backend
+```
+
+2) Create venv and install deps
+```powershell
+py -3 -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+3) Create database (Alembic)
+```powershell
+python -m alembic upgrade head
+```
+
+4) (Optional) Seed demo data
+```powershell
+python scripts/seed.py --month 2025-09
+```
+
+5) Start the app
+```powershell
+uvicorn app.main:app --reload
+# open http://127.0.0.1:8000/
+# API docs: http://127.0.0.1:8000/docs
+```
+
+## Notes
+- Database path: `backend/app/app.db` (SQLite). It is ignored by git, so your local data is not pushed to GitHub. Use the seed script or POST via `/docs` to create sample data after a fresh clone.
+- To switch databases, set `DATABASE_URL` in environment (e.g., Postgres) and install the appropriate driver.
+- FavIcon (optional): place an icon at `app/static/favicon.ico`.
+
+## Project layout
 ```
 backend/
   app/
@@ -21,50 +59,3 @@ backend/
   scripts/ (seed.py)
   requirements.txt
 ```
-
-## Quickstart (Windows PowerShell)
-
-```powershell
-cd backend
-py -3 -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-### Initialize DB (Alembic)
-```powershell
-# One-time (already initialized in repo if committed)
-python -m pip install alembic
-# ensure env.py is wired; then:
-python -m alembic upgrade head
-```
-
-### Run the app
-```powershell
-uvicorn app.main:app --reload
-# open http://127.0.0.1:8000/
-# API docs: http://127.0.0.1:8000/docs
-```
-
-## Seed Demo Data
-Populate some income and expenses for a target month.
-
-```powershell
-# From backend directory, venv active
-python scripts/seed.py --month 2025-09
-```
-- Omit `--month` to seed current month.
-- Idempotent: re-running will skip duplicates for the chosen month.
-
-## Environment
-- DB URL: configured in `app/core/config.py` (defaults to `sqlite:///app/app.db`).
-- To switch to Postgres, set `DATABASE_URL` and install `psycopg2-binary`.
-
-## Tests (suggested)
-- API: create/list/update/delete, month filter, summary totals
-- Web: render dashboard/transactions; totals in template
-
-## Notes
-- FavIcon: place an icon at `app/static/favicon.ico` and it will be served at `/static/favicon.ico`.
-- Month navigation: prev/next links preserve and update `?month=YYYY-MM`.
