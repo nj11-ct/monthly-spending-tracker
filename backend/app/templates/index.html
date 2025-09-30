@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <a class="btn btn-outline-primary" href="/?month={{ prev_month }}">« Prev</a>
+    <span class="mx-3 h5">{{ month_label }}</span>
+    <a class="btn btn-outline-primary" href="/?month={{ next_month }}">Next »</a>
+  </div>
+  <div>
+    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#txModalIncome">+Income</button>
+    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#txModalExpense">+Expense</button>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <h5>Income (Total: {{ '%.2f'|format(income_total) }})</h5>
+    <table class="table table-sm table-striped">
+      <thead><tr><th>Date</th><th>Category</th><th class="text-end">Amount</th></tr></thead>
+      <tbody>
+        {% for tx in incomes %}
+        <tr>
+          <td>{{ tx.date }}</td>
+          <td>{{ tx.category }}</td>
+          <td class="text-end text-success">{{ '%.2f'|format(tx.amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-muted">No income</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-6">
+    <h5>Expenses (Total: {{ '%.2f'|format(expense_total) }})</h5>
+    <table class="table table-sm table-striped">
+      <thead><tr><th>Date</th><th>Category</th><th class="text-end">Amount</th></tr></thead>
+      <tbody>
+        {% for tx in expenses %}
+        <tr>
+          <td>{{ tx.date }}</td>
+          <td>{{ tx.category }}</td>
+          <td class="text-end text-danger">{{ '%.2f'|format(tx.amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-muted">No expenses</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% set modal_id = 'Income' %}
+{% set modal_title = 'Income' %}
+{% set tx_type = 'income' %}
+{% include "_transaction_form.html" %}
+
+{% set modal_id = 'Expense' %}
+{% set modal_title = 'Expense' %}
+{% set tx_type = 'expense' %}
+{% include "_transaction_form.html" %}
+{% endblock %}

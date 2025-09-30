@@ -1,0 +1,5 @@
+- core/: config, database, models, schemas, dependencies, utils
+- api/v1/: transactions, summary
+- web/: Jinja routes
+- templates/: Jinja templates
+- static/: css/js

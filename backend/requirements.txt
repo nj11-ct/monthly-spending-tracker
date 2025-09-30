@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic
+jinja2
+python-multipart
+# psycopg2-binary  # uncomment if using Postgres
