@@ -2,12 +2,17 @@ from fastapi import APIRouter, Query, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core import utils, models, schemas
-from app.core.dependencies import get_db
+from app.core.dependencies import get_db, require_api_key
 
-router = APIRouter(prefix="/api/v1/summary", tags=["summary"])
+router = APIRouter(
+    prefix="/api/v1/summary", 
+    tags=["summary"], 
+    dependencies=[Depends(require_api_key)],
+    responses={401: {"description": "Invalid API key"}}
+)
 
 
-@router.get("/", response_model=schemas.Summary)
+@router.get("/", response_model=schemas.Summary, dependencies=[Depends(require_api_key)])
 def month_summary(month: str | None = Query(None), db: Session = Depends(get_db)):
     first = utils.parse_month(month)
     start, end = utils.month_bounds(first)

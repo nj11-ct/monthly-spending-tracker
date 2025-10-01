@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core import utils, models
 from app.core.dependencies import get_db
+from app.core.config import APP_API_KEY, DEBUG
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
@@ -45,6 +46,7 @@ def dashboard(request: Request, month: str | None = None, db: Session = Depends(
             "expenses": expense_rows,
             "income_total": income_total,
             "expense_total": expense_total,
+            "api_key": APP_API_KEY if DEBUG else "",  # Only expose in dev
         },
     )
 
@@ -78,5 +80,6 @@ def transactions_page(request: Request, month: str | None = None, db: Session = 
             "transactions": txs,
             "income_total": income_total,
             "expense_total": expense_total,
+            "api_key": APP_API_KEY if DEBUG else "",  # Only expose in dev
         },
     )

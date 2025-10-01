@@ -28,3 +28,4 @@ def test_transactions_page_renders(client):
     html = res.text
     assert "Transactions" in html or "Income:" in html
     assert "groceries" in html or "Expenses:" in html
+
