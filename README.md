@@ -13,7 +13,7 @@ A small FastAPI app with Jinja templates to track monthly income and expenses. S
 
 1) Clone and enter backend
 ```powershell
-git clone <your-repo-url>
+git clone [<your-repo-url>](https://github.com/nj11-ct/monthly-spending-tracker.git)
 cd monthly-spending-tracker\backend
 ```
 
