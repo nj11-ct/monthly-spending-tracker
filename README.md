@@ -13,7 +13,7 @@ A small FastAPI app with Jinja templates to track monthly income and expenses. S
 
 1) Clone and enter backend
 ```powershell
-git clone https://github.com/nj11-ct/monthly-spending-tracker.git
+git clone <your-repo-url>
 cd monthly-spending-tracker\backend
 ```
 
@@ -29,12 +29,27 @@ python -m pip install -r requirements.txt
 python -m alembic upgrade head
 ```
 
-4) (Optional) Seed demo data
+4) Set environment variables
+```powershell
+$env:APP_API_KEY="your-secret-key"
+$env:DEBUG="true"
+```
+
+5) Install and start Ollama (for LLM features)
+```powershell
+# Download from https://ollama.ai/download
+# Then install a model:
+ollama pull gemma3
+# Start Ollama service (runs in background)
+ollama serve
+```
+
+6) (Optional) Seed demo data
 ```powershell
 python scripts/seed.py --month 2025-09
 ```
 
-5) Start the app
+7) Start the app
 ```powershell
 uvicorn app.main:app --reload
 # open http://127.0.0.1:8000/

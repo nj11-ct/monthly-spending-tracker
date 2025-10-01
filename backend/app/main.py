@@ -6,6 +6,7 @@ from fastapi.openapi.utils import get_openapi
 
 from app.api.v1.transactions import router as transactions_router
 from app.api.v1.summary import router as summary_router
+from app.api.v1.llm import router as llm_router
 from app.web.routes import router as web_router
 from app.core.database import Base, engine
 import app.core.models  # ensure models are imported
@@ -34,6 +35,7 @@ async def on_startup():
 # API routers
 app.include_router(transactions_router)
 app.include_router(summary_router)
+app.include_router(llm_router)
 
 # Web routes
 app.include_router(web_router)

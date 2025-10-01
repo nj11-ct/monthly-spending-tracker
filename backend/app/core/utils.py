@@ -36,3 +36,9 @@ def next_month_str(month_str_input: str) -> str:
         y += 1
         m = 1
     return f"{y:04d}-{m:02d}"
+
+
+def month_label(month_str_input: str) -> str:
+    """Convert YYYY-MM to 'Month YYYY' format"""
+    d = parse_month(month_str_input)
+    return d.strftime("%B %Y")

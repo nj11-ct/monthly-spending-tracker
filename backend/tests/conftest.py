@@ -60,6 +60,12 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    # Override API key requirement for tests
+    from app.core.dependencies import require_api_key
+    def mock_require_api_key():
+        return "test-key"
+    app.dependency_overrides[require_api_key] = mock_require_api_key
+    
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

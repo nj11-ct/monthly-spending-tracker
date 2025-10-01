@@ -24,6 +24,55 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function(){
+  // Get API key for requests
+  const apiKey = document.querySelector('meta[name="x-api-key"]')?.content;
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['X-API-Key'] = apiKey;
+
+  // Smart autocomplete for transaction forms
+  let autocompleteTimeout;
+  document.addEventListener('input', async function(e){
+    if (e.target.name === 'description' && e.target.value.length > 3) {
+      // Clear previous timeout to avoid too many API calls
+      clearTimeout(autocompleteTimeout);
+      
+      autocompleteTimeout = setTimeout(async () => {
+        const description = e.target.value.trim();
+        const form = e.target.closest('.tx-form');
+        if (!form) return;
+        
+        try {
+          const response = await fetch('/api/v1/llm/suggest', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ description })
+          });
+          
+          if (response.ok) {
+            const suggestion = await response.json();
+            const typeSelect = form.querySelector('select[name="type"]');
+            const categorySelect = form.querySelector('select[name="category"]');
+            
+            if (typeSelect && suggestion.suggested_type) {
+              typeSelect.value = suggestion.suggested_type;
+            }
+            if (categorySelect && suggestion.suggested_category) {
+              categorySelect.value = suggestion.suggested_category;
+            }
+            
+            // Show suggestion with confidence
+            if (suggestion.confidence > 0.7) {
+              showSuggestion(`💡 Suggested: ${suggestion.suggested_type} - ${suggestion.suggested_category}`, 'success');
+            }
+          }
+        } catch (err) {
+          console.log('Autocomplete failed:', err);
+        }
+      }, 500); // Wait 500ms after user stops typing
+    }
+  });
+
+  // Form submission
   document.addEventListener('submit', async function(e){
     const form = e.target.closest('.tx-form');
     if(!form) return;
@@ -32,9 +81,6 @@
     // normalize amount and date
     if (typeof data.amount === 'string') data.amount = parseFloat(data.amount);
     try {
-      const k = document.querySelector('meta[name="x-api-key"]')?.content;
-      const headers = { 'Content-Type': 'application/json' };
-      if (k) headers['X-API-Key'] = k;
       const res = await fetch('/api/v1/transactions/', {
         method: 'POST',
         headers,
@@ -49,6 +95,124 @@
       alert('Error: ' + err.message);
     }
   });
+
+  // Generate monthly report
+  window.generateMonthlyReport = async function(month) {
+    try {
+      showLoading('Generating report...');
+      const response = await fetch(`/api/v1/llm/reports/monthly?month=${month}`, {
+        method: 'POST',
+        headers
+      });
+      
+      if (response.ok) {
+        const report = await response.json();
+        showReportModal(month, report.report_text, report.insights);
+      } else {
+        throw new Error('Failed to generate report');
+      }
+    } catch (err) {
+      showSuggestion('Error generating report: ' + err.message, 'danger');
+    } finally {
+      hideLoading();
+    }
+  };
+
+  // Helper functions
+  function showSuggestion(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    alert.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 3000);
+  }
+
+  function showLoading(message) {
+    const loading = document.createElement('div');
+    loading.id = 'loading-overlay';
+    loading.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+    loading.style.cssText = 'background: rgba(0,0,0,0.5); z-index: 9999;';
+    loading.innerHTML = `
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <span class="text-light ms-2">${message}</span>
+    `;
+    document.body.appendChild(loading);
+  }
+
+  function hideLoading() {
+    const loading = document.getElementById('loading-overlay');
+    if (loading) loading.remove();
+  }
+
+  function showReportModal(month, reportText, insights) {
+    // Debug: log the month being passed
+    console.log('Month passed to modal:', month);
+    
+    // Convert YYYY-MM to "Month YYYY" format
+    // Fix: Parse YYYY-MM correctly by adding '-01' for day
+    const [year, monthNum] = month.split('-');
+    const monthLabel = new Date(parseInt(year), parseInt(monthNum) - 1, 1).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long' 
+    });
+    
+    console.log('Converted month label:', monthLabel);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">📊 Monthly Report - ${monthLabel}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <h6>Insights:</h6>
+              <ul class="list-unstyled">
+                ${insights.map(insight => `<li>• ${insight}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="mb-3">
+              <h6>Report:</h6>
+              <div class="border p-3 rounded bg-light" style="max-height: 400px; overflow-y: auto;">
+                <pre style="white-space: pre-wrap; font-family: inherit;">${reportText}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="copyReport()">Copy Report</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Store report text for copying
+    window.currentReportText = reportText;
+    
+    // Clean up when modal is hidden
+    modal.addEventListener('hidden.bs.modal', () => modal.remove());
+  }
+
+  window.copyReport = function() {
+    if (window.currentReportText) {
+      navigator.clipboard.writeText(window.currentReportText).then(() => {
+        showSuggestion('Report copied to clipboard!', 'success');
+      });
+    }
+  };
 })();
 </script>
 </body>
